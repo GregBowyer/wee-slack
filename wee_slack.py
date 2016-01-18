@@ -6,13 +6,14 @@ import time
 import json
 import os
 import pickle
-import sha
+import hashlib
 import re
 import urllib
-import HTMLParser
+from html.parser import HTMLParser
 import sys
 import traceback
 import collections
+import itertools
 from websocket import create_connection,WebSocketConnectionClosedException
 
 # hack to make tests possible.. better way?
@@ -599,7 +600,8 @@ class Channel(object):
             tags = "notify_private,notify_message"
         elif self.muted:
             tags = "no_highlight,notify_none,logger_backlog_end"
-        elif user in [x.strip() for x in w.prefix("join"), w.prefix("quit")]:
+        elif user in [x.strip() for x in
+                      itertools.chain(w.prefix("join"), w.prefix("quit"))]:
             tags = "irc_smart_filter"
         else:
             tags = "notify_message"
@@ -1903,7 +1905,7 @@ big_data = {}
 def url_processor_cb(data, command, return_code, out, err):
     global big_data
     data = pickle.loads(data)
-    identifier = sha.sha("{}{}".format(data, command)).hexdigest()
+    identifier = hashlib.sha1("{}{}".format(data, command)).hexdigest()
     if identifier not in big_data:
         big_data[identifier] = ''
     big_data[identifier] += out
